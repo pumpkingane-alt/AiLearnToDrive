@@ -20,6 +20,11 @@ public class EvolutionManager {
     public int generation = 1, tick = 0, tickLimit = 2400;
     public float globalBest = 0f, lastGenBest = 0f;
     public NeuralNetwork globalBestBrain;
+    /** True iff this session is allowed to write the single checkpoint slot: it resumed from the
+     *  stored checkpoint, or the slot was empty / explicitly cleared for this run. A non-owned
+     *  session (e.g. a resume that failed and fell back to a fresh run) must never overwrite a
+     *  pre-existing checkpoint it does not own, so the prior lineage stays resumable. */
+    public boolean ownsCheckpoint = false;
     private final Random rng = new Random();
     private static final Comparator<Car> BY_FITNESS = new Comparator<Car>() {
         public int compare(Car a, Car b) { return Float.compare(b.fitness, a.fitness); }
@@ -118,7 +123,7 @@ public class EvolutionManager {
         generation++;
         if (GameSettings.autoSaveProgress) {
             if (globalBestBrain != null) SaveManager.autoSaveBest(ctx, globalBestBrain, generation - 1, globalBest);
-            if (generation % Math.max(1, GameSettings.checkpointEvery) == 0) SaveManager.saveCheckpoint(ctx, this);
+            if (ownsCheckpoint && generation % Math.max(1, GameSettings.checkpointEvery) == 0) SaveManager.saveCheckpoint(ctx, this);
         }
         resetGeneration();
     }
