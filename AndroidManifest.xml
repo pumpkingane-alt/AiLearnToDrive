@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.ailearn.drive"
+    android:versionCode="3"
+    android:versionName="1.2">
+    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="26"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <application
+        android:name=".App"
+        android:label="AI Learn To Drive"
+        android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen">
+        <!-- Launcher: shows the last crash report if there is one, otherwise starts the game -->
+        <activity android:name=".LauncherActivity" android:theme="@android:style/Theme.Holo.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden"/>
+        <activity
+            android:name=".NeuralEditorActivity"
+            android:theme="@android:style/Theme.Holo.NoActionBar"
+            android:windowSoftInputMode="adjustResize"/>
+    </application>
+</manifest>
