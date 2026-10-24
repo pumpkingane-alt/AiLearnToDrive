@@ -78,7 +78,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
 
     public void onHostPause() {
         synchronized (lock) {
-            if (evo != null && GameSettings.autoSaveProgress) SaveManager.saveCheckpoint(act, evo);
+            if (evo != null && evo.ownsCheckpoint && GameSettings.autoSaveProgress) SaveManager.saveCheckpoint(act, evo);
             GameSettings.save();
         }
     }
@@ -95,7 +95,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     void leaveSim() {
-        if (evo != null) SaveManager.saveCheckpoint(act, evo);
+        if (evo != null && evo.ownsCheckpoint) SaveManager.saveCheckpoint(act, evo);
         state = MENU;
         paused = false;
         layoutUi();
@@ -354,7 +354,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
         if (state == MENU) {
             UIManager.Btn b = ui.hit(menuB, x, y);
             if (b == null) return;
-            if (b.id.equals("start")) startSim(false, null);
+            if (b.id.equals("start")) startFreshWithConsent(null);
             else if (b.id.equals("resume")) startSim(true, null);
             else if (b.id.equals("creator")) act.startActivity(new Intent(act, NeuralEditorActivity.class));
             else if (b.id.equals("editor")) openEditor();
@@ -412,11 +412,36 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             if (resume) ok = em.resume(SaveManager.loadCheckpoint(act));
             if (resume && !ok) toast("Checkpoint doesn't match current ray count - starting fresh");
             if (!ok) em.startFresh(seed);
+            // This session owns the single checkpoint slot only if it resumed from it, or if no
+            // checkpoint is currently stored (either none ever existed, or the user explicitly
+            // discarded it via startFreshWithConsent before reaching here). A resume that failed
+            // and fell back to a fresh run must NOT own the slot: the (incompatible) checkpoint is
+            // left intact so the user can fix their settings and retry resuming it later.
+            em.ownsCheckpoint = ok || !SaveManager.hasCheckpoint(act);
             evo = em;
             cam.mode = Camera2D.FOLLOW;
             cam.zoom = GameSettings.cameraZoom;
             cam.snapTo(t.startX, t.startY);
             paused = false; speedIdx = 0; state = SIM;
+        }
+    }
+
+    /** Begin a fresh (non-resumed) run, asking for explicit consent before discarding any existing
+     *  long-run checkpoint. Routed here from every "start fresh / load brain" entry point so a fresh
+     *  lineage can never silently clobber a stored checkpoint it does not own. */
+    public void startFreshWithConsent(final NeuralNetwork seed) {
+        if (SaveManager.hasCheckpoint(act)) {
+            new AlertDialog.Builder(act)
+                .setTitle("Discard existing checkpoint?")
+                .setMessage("Starting a fresh run permanently discards the saved checkpoint (Gen "
+                    + SaveManager.checkpointGen(act) + ") and cannot be undone. Continue?")
+                .setPositiveButton("Discard & Start Fresh", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface d, int w) { SaveManager.deleteCheckpoint(act); startSim(false, seed); }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        } else {
+            startSim(false, seed);
         }
     }
 
@@ -491,7 +516,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                     int rays = n.sizes[0] - 2;
                     if (rays < 1 || rays > 13) { toast("Brain input count unsupported (needs 1-13 rays + 2)"); return; }
                     GameSettings.rayCount = rays;
-                    startSim(false, n);
+                    startFreshWithConsent(n);
                 } catch (Exception ex) { toast("Could not load: " + ex.getMessage()); }
             } }).show();
     }

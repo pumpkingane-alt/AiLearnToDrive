@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
                 .setPositiveButton("Resume (Gen " + SaveManager.checkpointGen(this) + ")", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface d, int w) { gv.startSim(true, null); } })
                 .setNegativeButton("Start Fresh", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface d, int w) { gv.startSim(false, null); } })
+                    public void onClick(DialogInterface d, int w) { gv.startFreshWithConsent(null); } })
                 .setNeutralButton("Menu", null)
                 .show();
         }

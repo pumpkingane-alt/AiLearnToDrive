@@ -61,6 +61,13 @@ public class SaveManager {
     public static boolean hasCheckpoint(Context c) { return checkpointFile(c).exists(); }
     public static int checkpointGen(Context c) { return c.getSharedPreferences("ai_drive_meta", 0).getInt("cp_gen", 0); }
 
+    /** Permanently remove the stored population checkpoint. Only call after explicit user consent,
+     *  since this discards a (possibly long-running) training lineage that cannot be recovered. */
+    public static void deleteCheckpoint(Context c) {
+        try { checkpointFile(c).delete(); } catch (Exception e) { }
+        c.getSharedPreferences("ai_drive_meta", 0).edit().remove("cp_gen").commit();
+    }
+
     public static void saveCheckpoint(Context c, EvolutionManager em) {
         try {
             StringBuilder sb = new StringBuilder("{\"generation\":" + em.generation + ",\"best\":" + em.globalBest + ",\"pops\":[");
