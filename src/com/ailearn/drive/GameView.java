@@ -411,7 +411,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             boolean ok = false;
             if (resume) ok = em.resume(SaveManager.loadCheckpoint(act));
             if (resume && !ok) toast("Checkpoint doesn't match current ray count - starting fresh");
-            if (!ok) em.startFresh(seed);
+            if (!ok) {
+                NeuralNetwork saved = (seed == null && GameSettings.useCustomBrain) ? SaveManager.loadCustomBrain(act) : null;
+                EvolutionManager.SeedResolution r = EvolutionManager.resolveSeed(seed, GameSettings.useCustomBrain, saved, GameSettings.inputCount(), GameSettings.rayCount);
+                if (r.message != null) toast(r.message);
+                if (r.rayCount != GameSettings.rayCount) GameSettings.rayCount = r.rayCount;
+                em.startFresh(r.seed);
+            }
             evo = em;
             cam.mode = Camera2D.FOLLOW;
             cam.zoom = GameSettings.cameraZoom;
