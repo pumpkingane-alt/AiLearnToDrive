@@ -27,12 +27,10 @@ public class EvolutionManager {
 
     public EvolutionManager(Context c, Track t) { ctx = c; track = t; }
 
-    /** Fresh run. seed (optional) = loaded/custom brain; the rest of each population are mutated variants. */
+    /** Fresh run. seed (optional) = the brain to seed each population from (the rest are mutated
+     *  variants); null starts from random networks. Callers resolve any saved custom brain via
+     *  {@link #resolveSeed} so the outcome can be reported to the user. */
     public void startFresh(NeuralNetwork seed) {
-        if (seed == null && GameSettings.useCustomBrain) {
-            NeuralNetwork n = SaveManager.loadCustomBrain(ctx);
-            if (n != null && NeuralNetwork.dimError(n, GameSettings.inputCount()) == null) seed = n;
-        }
         int total = Math.max(1, Math.min(100, GameSettings.maxCars));
         int P = Math.max(1, Math.min(GameSettings.populationCount, total));
         int per = Math.max(1, total / P);
@@ -50,6 +48,35 @@ public class EvolutionManager {
             pops.add(pop);
         }
         resetGeneration();
+    }
+
+    /** Outcome of resolving the seed brain for a fresh run (pure, no UI/Android dependencies). */
+    public static class SeedResolution {
+        public final NeuralNetwork seed;
+        public final String message;
+        public final int rayCount;
+        public SeedResolution(NeuralNetwork seed, String message, int rayCount) {
+            this.seed = seed; this.message = message; this.rayCount = rayCount;
+        }
+    }
+
+    /** Resolves the brain to seed a fresh run from. An explicit provided brain wins (e.g. "Load Trained
+     *  Brain"); otherwise the saved custom brain is validated against the current sensor config and,
+     *  on a repairable ray-count mismatch, rayCount is adjusted to match it (like "Load Trained Brain")
+     *  so it still seeds the run. Returns a user-facing message whenever a requested custom brain could
+     *  not be used, so the failure is never silent. Pure: loads nothing and toasts nothing itself. */
+    public static SeedResolution resolveSeed(NeuralNetwork provided, boolean useCustomBrain,
+            NeuralNetwork saved, int currentInputs, int currentRays) {
+        if (provided != null) return new SeedResolution(provided, null, currentRays);
+        if (!useCustomBrain) return new SeedResolution(null, null, currentRays);
+        if (saved == null) return new SeedResolution(null, "Custom brain not found or corrupt - starting from random brains", currentRays);
+        String err = NeuralNetwork.dimError(saved, currentInputs);
+        if (err == null) return new SeedResolution(saved, null, currentRays);
+        int out = saved.sizes[saved.sizes.length - 1];
+        int rays = saved.sizes[0] - 2;
+        if (out == 4 && rays >= 1 && rays <= 13)
+            return new SeedResolution(saved, "Custom brain needs " + rays + " rays - adjusted sensor ray count (was " + currentRays + "); starting from your brain.", rays);
+        return new SeedResolution(null, "Custom brain doesn't match current settings - starting from random brains", currentRays);
     }
 
     public boolean resume(SaveManager.Checkpoint cp) {
