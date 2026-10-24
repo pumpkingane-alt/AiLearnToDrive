@@ -17,10 +17,11 @@ public class TrackEditor {
     private final ScaleGestureDetector sgd;
     private final float d;
 
-    public TrackEditor(Context ctx, Track t) {
+    public TrackEditor(Context ctx, Track t, int vw, int vh) {
         d = ctx.getResources().getDisplayMetrics().density;
         track = t;
         cam.mode = Camera2D.FREE;
+        cam.setViewport(vw, vh);
         if (t.m >= 3) { cam.snapTo((t.minX + t.maxX) / 2f, (t.minY + t.maxY) / 2f); cam.zoom = cam.fitZoom(t) * 0.9f; }
         else cam.zoom = 0.6f;
         sgd = new ScaleGestureDetector(ctx, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
