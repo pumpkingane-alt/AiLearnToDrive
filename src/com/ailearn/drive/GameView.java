@@ -26,7 +26,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     volatile boolean running;
     final Object lock = new Object();
     int state = MENU, speedIdx = 0, W = 800, H = 480;
-    boolean paused, showNet = true;
+    boolean paused, showNet = true, surfaceInitialized, pendingEditor;
     final float d;
     final SpriteManager sprites;
     final UIManager ui;
@@ -68,7 +68,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     public void surfaceChanged(SurfaceHolder h, int f, int w, int hh) {
-        synchronized (lock) { W = w; H = hh; cam.setViewport(w, hh); layoutUi(); }
+        synchronized (lock) { W = w; H = hh; cam.setViewport(w, hh); layoutUi(); surfaceInitialized = true; if (pendingEditor) { pendingEditor = false; openEditor(); } }
     }
 
     public void surfaceDestroyed(SurfaceHolder h) {
@@ -421,7 +421,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     void openEditor() {
-        editor = new TrackEditor(act, loadActiveTrack());
+        if (!surfaceInitialized) { pendingEditor = true; return; }
+        editor = new TrackEditor(act, loadActiveTrack(), W, H);
         state = EDIT;
     }
 
@@ -467,8 +468,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             new AlertDialog.Builder(act).setTitle("Load track").setItems(items, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dlg, int i) {
                     synchronized (lock) {
-                        if (i == 0) { editor = new TrackEditor(act, Track.createDefault()); GameSettings.currentTrack = ""; }
-                        else { Track tr = SaveManager.loadTrack(act, names[i - 1]); if (tr == null) { toast("Could not load track"); return; } editor = new TrackEditor(act, tr); GameSettings.currentTrack = names[i - 1]; }
+                        if (i == 0) { editor = new TrackEditor(act, Track.createDefault(), W, H); GameSettings.currentTrack = ""; }
+                        else { Track tr = SaveManager.loadTrack(act, names[i - 1]); if (tr == null) { toast("Could not load track"); return; } editor = new TrackEditor(act, tr, W, H); GameSettings.currentTrack = names[i - 1]; }
                         GameSettings.save();
                     }
                 } }).show();
