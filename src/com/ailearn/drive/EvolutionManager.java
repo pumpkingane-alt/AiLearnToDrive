@@ -121,9 +121,9 @@ public class EvolutionManager {
             for (int i = 0; i < N; i++) cars.get(i).brain = next.get(i);
         }
         generation++;
-        if (GameSettings.autoSaveProgress && ownsCheckpoint) {
+        if (GameSettings.autoSaveProgress) {
             if (globalBestBrain != null) SaveManager.autoSaveBest(ctx, globalBestBrain, generation - 1, globalBest);
-            if (generation % Math.max(1, GameSettings.checkpointEvery) == 0) SaveManager.saveCheckpoint(ctx, this);
+            if (ownsCheckpoint && generation % Math.max(1, GameSettings.checkpointEvery) == 0) SaveManager.saveCheckpoint(ctx, this);
         }
         resetGeneration();
     }

@@ -436,11 +436,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                 .setMessage("Starting a fresh run permanently discards the saved checkpoint (Gen "
                     + SaveManager.checkpointGen(act) + ") and cannot be undone. Continue?")
                 .setPositiveButton("Discard & Start Fresh", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface d, int w) { SaveManager.deleteCheckpoint(act); startSim(false, seed); }
+                    public void onClick(DialogInterface d, int w) {
+                        if (!SaveManager.deleteCheckpoint(act)) { toast("Could not delete the saved checkpoint; aborting fresh start."); return; }
+                        if (seed != null) GameSettings.rayCount = seed.sizes[0] - 2;
+                        startSim(false, seed);
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
         } else {
+            if (seed != null) GameSettings.rayCount = seed.sizes[0] - 2;
             startSim(false, seed);
         }
     }
@@ -515,7 +520,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                     if (n.sizes[n.sizes.length - 1] != 4) { toast("Brain needs 4 outputs (has " + n.sizes[n.sizes.length - 1] + ")"); return; }
                     int rays = n.sizes[0] - 2;
                     if (rays < 1 || rays > 13) { toast("Brain input count unsupported (needs 1-13 rays + 2)"); return; }
-                    GameSettings.rayCount = rays;
                     startFreshWithConsent(n);
                 } catch (Exception ex) { toast("Could not load: " + ex.getMessage()); }
             } }).show();
