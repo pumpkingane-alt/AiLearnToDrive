@@ -26,7 +26,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     volatile boolean running;
     final Object lock = new Object();
     int state = MENU, speedIdx = 0, W = 800, H = 480;
-    boolean paused, showNet = true;
+    boolean paused, showNet = true, surfaceInitialized, pendingEditor;
     final float d;
     final SpriteManager sprites;
     final UIManager ui;
@@ -68,7 +68,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     public void surfaceChanged(SurfaceHolder h, int f, int w, int hh) {
-        synchronized (lock) { W = w; H = hh; cam.setViewport(w, hh); layoutUi(); }
+        synchronized (lock) { W = w; H = hh; cam.setViewport(w, hh); layoutUi(); surfaceInitialized = true; if (pendingEditor) { pendingEditor = false; openEditor(); } }
     }
 
     public void surfaceDestroyed(SurfaceHolder h) {
@@ -421,6 +421,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     }
 
     void openEditor() {
+        if (!surfaceInitialized) { pendingEditor = true; return; }
         editor = new TrackEditor(act, loadActiveTrack(), W, H);
         state = EDIT;
     }
