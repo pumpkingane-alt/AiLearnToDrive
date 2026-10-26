@@ -28,19 +28,20 @@ public class GameSettings {
         showNodeNames = s.getBoolean("showNodeNames", showNodeNames);
         showWeightValues = s.getBoolean("showWeightValues", showWeightValues);
         autoSaveProgress = s.getBoolean("autoSaveProgress", autoSaveProgress);
-        cameraZoom = s.getFloat("cameraZoom", cameraZoom);
-        populationCount = s.getInt("populationCount", populationCount);
-        maxCars = s.getInt("maxCars", maxCars);
-        rayCount = s.getInt("rayCount", rayCount);
-        hiddenLayers = s.getInt("hiddenLayers", hiddenLayers);
-        neuronsPerLayer = s.getInt("neuronsPerLayer", neuronsPerLayer);
-        checkpointEvery = s.getInt("checkpointEvery", checkpointEvery);
-        genTimeLimit = s.getInt("genTimeLimit", genTimeLimit);
-        rayLength = s.getFloat("rayLength", rayLength);
-        raySpread = s.getFloat("raySpread", raySpread);
-        mutationRate = s.getFloat("mutationRate", mutationRate);
-        mutationIntensity = s.getFloat("mutationIntensity", mutationIntensity);
-        crossoverRate = s.getFloat("crossoverRate", crossoverRate);
+        cameraZoom = Math.max(0.2f, Math.min(4f, s.getFloat("cameraZoom", cameraZoom)));
+        populationCount = Math.max(1, Math.min(10, s.getInt("populationCount", populationCount)));
+        maxCars = Math.max(1, Math.min(100, s.getInt("maxCars", maxCars)));
+        rayCount = Math.max(1, Math.min(13, s.getInt("rayCount", rayCount)));
+        hiddenLayers = Math.max(1, Math.min(10, s.getInt("hiddenLayers", hiddenLayers)));
+        neuronsPerLayer = Math.max(1, Math.min(16, s.getInt("neuronsPerLayer", neuronsPerLayer)));
+        checkpointEvery = Math.max(1, Math.min(100, s.getInt("checkpointEvery", checkpointEvery)));
+        genTimeLimit = Math.max(5, Math.min(180, s.getInt("genTimeLimit", genTimeLimit)));
+        rayLength = Math.max(50f, Math.min(400f, s.getFloat("rayLength", rayLength)));
+        raySpread = Math.max(30f, Math.min(360f, s.getFloat("raySpread", raySpread)));
+        mutationRate = Math.max(0f, Math.min(1f, s.getFloat("mutationRate", mutationRate)));
+        mutationIntensity =
+            Math.max(0.01f, Math.min(1f, s.getFloat("mutationIntensity", mutationIntensity)));
+        crossoverRate = Math.max(0f, Math.min(1f, s.getFloat("crossoverRate", crossoverRate)));
         useCustomBrain = s.getBoolean("useCustomBrain", useCustomBrain);
         currentTrack = s.getString("currentTrack", currentTrack);
     }
